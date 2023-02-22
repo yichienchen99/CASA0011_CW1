@@ -77,17 +77,14 @@ end
 ;;
 
 to go
-  if not any? turtles
+  if not any? turtles or ticks > 1000
   [
     stop
   ]
   set cap-history lput (count turtles) cap-history
   set ratio-history lput ratio ratio-history
-  if ticks > 100 and ((item ticks cap-history) = (item (ticks - 100) cap-history)) and (item ticks ratio-history) < maxi-ratio
-  [ set crop-history lput ratio crop-history
-    if ticks > 1000
-    [stop]
-  ]
+  if ticks > 100 and ((item ticks cap-history) = (item (ticks - 100) cap-history))
+  [ set crop-history lput ratio crop-history]
   ask patches [
     patch-growback
     patch-recolor
@@ -97,7 +94,7 @@ to go
     turtle-eat
     if sugar <= 0
       [ die ]
-    set sugar-history lput ratio sugar-history
+    ;set sugar-history lput ratio sugar-history
     run visualization
 ]
 
@@ -174,8 +171,16 @@ to-report calc-pct [ #pct #vals ]
   [ report #low-val + ((#pct-position - #low-rank) / (#high-rank - #low-rank)) * (#high-val - #low-val) ]
 end
 
+to-report top-20
+  report mean [sugar] of turtles with [sugar >= (calc-pct 80 [sugar] of turtles)]
+end
+
+to-report bottom-20
+  report mean [sugar] of turtles with [sugar <= (calc-pct 20 [sugar] of turtles)]
+end
+
 to-report ratio
-  report (calc-pct 80 [sugar] of turtles / calc-pct 20 [sugar] of turtles)
+  report (top-20 / bottom-20)
 end
 
 to-report maxi-ratio
@@ -279,28 +284,10 @@ visualization
 0
 
 PLOT
-725
-15
-900
-140
-Population
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plotxy ticks count turtles"
-
-PLOT
-30
-585
-250
-740
+305
+425
+525
+580
 Wealth distribution
 NIL
 NIL
@@ -328,42 +315,6 @@ initial-population
 1
 NIL
 HORIZONTAL
-
-PLOT
-255
-585
-475
-740
-Average vision
-NIL
-NIL
-0.0
-10.0
-0.0
-6.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plotxy ticks mean [vision] of turtles"
-
-PLOT
-485
-585
-705
-740
-Average metabolism
-NIL
-NIL
-0.0
-10.0
-0.0
-5.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plotxy ticks mean [metabolism] of turtles"
 
 MONITOR
 10
@@ -400,7 +351,7 @@ maximum-sugar-endowment
 maximum-sugar-endowment
 0
 200
-25.0
+190.0
 1
 1
 NIL
@@ -430,62 +381,11 @@ maximum-vision
 maximum-vision
 0
 10
-6.0
+10.0
 1
 1
 NIL
 HORIZONTAL
-
-MONITOR
-100
-365
-197
-410
-Average sugar
-mean [sugar] of turtles
-3
-1
-11
-
-PLOT
-295
-430
-495
-580
-sugar
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-true
-"" ""
-PENS
-"50th" 1.0 0 -13840069 true "" "plotxy ticks median [sugar] of turtles"
-"max" 1.0 0 -2674135 true "" "plotxy ticks max [sugar] of turtles"
-"min" 1.0 0 -13345367 true "" "plotxy ticks min [sugar] of turtles"
-"20th" 1.0 0 -13791810 true "" "plotxy ticks calc-pct 20 [sugar] of turtles"
-"80th" 1.0 0 -955883 true "" "plotxy ticks calc-pct 80 [sugar] of turtles"
-
-PLOT
-505
-430
-705
-580
-mean to median
-NIL
-NIL
-0.0
-10.0
-0.0
-1.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plotxy ticks (mean [sugar] of turtles / median [sugar] of turtles)"
 
 SLIDER
 10
@@ -504,46 +404,23 @@ HORIZONTAL
 
 PLOT
 10
-430
-210
-580
-/median
+425
+295
+575
+output
 NIL
 NIL
 0.0
 10.0
 0.0
-3.0
+10.0
 true
 true
 "" ""
 PENS
-"20th" 1.0 0 -13791810 true "" "plotxy ticks (calc-pct 20 [sugar] of turtles / median [sugar] of turtles)"
-"50th" 1.0 0 -13840069 true "" "plotxy ticks (median [sugar] of turtles / median [sugar] of turtles)"
-"80th" 1.0 0 -955883 true "" "plotxy ticks (calc-pct 80 [sugar] of turtles / median [sugar] of turtles)"
-"20:20" 1.0 0 -16777216 true "" "plotxy ticks (calc-pct 80 [sugar] of turtles / calc-pct 20 [sugar] of turtles)"
-
-MONITOR
-215
-430
-292
-475
-Maxi 20:20
-maxi-ratio
-3
-1
-11
-
-MONITOR
-212
-480
-292
-525
-Aver 20:20
-crop-ratio
-3
-1
-11
+"population" 1.0 0 -16777216 true "" "plotxy ticks count turtles"
+"20:20 ratio" 1.0 0 -7500403 true "" "plotxy ticks ratio"
+"maximum sugar" 1.0 0 -2674135 true "" "plotxy ticks max [sugar] of turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -910,54 +787,12 @@ NetLogo 6.3.0
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="pop-sug" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>crop-ratio</metric>
-    <steppedValueSet variable="maximum-sugar-endowment" first="10" step="10" last="100"/>
-    <enumeratedValueSet variable="maximum-vision">
-      <value value="6"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="minimum-sugar-endowment">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="visualization">
-      <value value="&quot;no-visualization&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="maximum-metabolism">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="initial-population" first="100" step="100" last="1000"/>
-    <enumeratedValueSet variable="grow-back-rate">
-      <value value="1"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="sug-meta" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>crop-ratio</metric>
-    <steppedValueSet variable="maximum-sugar-endowment" first="10" step="10" last="100"/>
-    <enumeratedValueSet variable="maximum-vision">
-      <value value="6"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="minimum-sugar-endowment">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="visualization">
-      <value value="&quot;no-visualization&quot;"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="maximum-metabolism" first="2" step="1" last="10"/>
-    <enumeratedValueSet variable="initial-population">
-      <value value="400"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="grow-back-rate">
-      <value value="1"/>
-    </enumeratedValueSet>
-  </experiment>
   <experiment name="sug-vision" repetitions="10" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <metric>crop-ratio</metric>
+    <metric>mean [sugar] of turtles</metric>
+    <metric>count turtles</metric>
     <steppedValueSet variable="maximum-sugar-endowment" first="10" step="20" last="200"/>
     <steppedValueSet variable="maximum-vision" first="2" step="1" last="10"/>
     <enumeratedValueSet variable="minimum-sugar-endowment">
@@ -976,164 +811,33 @@ NetLogo 6.3.0
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="sug-gbr" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>crop-ratio</metric>
-    <steppedValueSet variable="maximum-sugar-endowment" first="10" step="10" last="100"/>
-    <enumeratedValueSet variable="maximum-vision">
-      <value value="6"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="minimum-sugar-endowment">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="visualization">
-      <value value="&quot;no-visualization&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="maximum-metabolism">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="initial-population">
-      <value value="400"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="grow-back-rate" first="0.5" step="0.5" last="4.5"/>
-  </experiment>
-  <experiment name="pop-meta" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>crop-ratio</metric>
-    <enumeratedValueSet variable="maximum-sugar-endowment">
-      <value value="25"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="maximum-vision">
-      <value value="6"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="minimum-sugar-endowment">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="visualization">
-      <value value="&quot;no-visualization&quot;"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="maximum-metabolism" first="2" step="1" last="10"/>
-    <steppedValueSet variable="initial-population" first="100" step="100" last="1000"/>
-    <enumeratedValueSet variable="grow-back-rate">
-      <value value="1"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="pop-vision" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>crop-ratio</metric>
-    <enumeratedValueSet variable="maximum-sugar-endowment">
-      <value value="25"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="maximum-vision" first="2" step="1" last="10"/>
-    <enumeratedValueSet variable="minimum-sugar-endowment">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="visualization">
-      <value value="&quot;no-visualization&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="maximum-metabolism">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="initial-population" first="100" step="100" last="1000"/>
-    <enumeratedValueSet variable="grow-back-rate">
-      <value value="1"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="pop-gbr" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>crop-ratio</metric>
-    <enumeratedValueSet variable="maximum-sugar-endowment">
-      <value value="25"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="maximum-vision">
-      <value value="6"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="minimum-sugar-endowment">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="visualization">
-      <value value="&quot;no-visualization&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="maximum-metabolism">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="initial-population" first="100" step="100" last="1000"/>
-    <steppedValueSet variable="grow-back-rate" first="0.5" step="0.5" last="4.5"/>
-  </experiment>
-  <experiment name="meta-vision" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>crop-ratio</metric>
-    <enumeratedValueSet variable="maximum-sugar-endowment">
-      <value value="25"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="maximum-vision" first="2" step="1" last="10"/>
-    <enumeratedValueSet variable="minimum-sugar-endowment">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="visualization">
-      <value value="&quot;no-visualization&quot;"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="maximum-metabolism" first="2" step="1" last="10"/>
-    <enumeratedValueSet variable="initial-population">
-      <value value="400"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="grow-back-rate">
-      <value value="1"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="meta-gbr" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>crop-ratio</metric>
-    <enumeratedValueSet variable="maximum-sugar-endowment">
-      <value value="25"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="maximum-vision">
-      <value value="6"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="minimum-sugar-endowment">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="visualization">
-      <value value="&quot;no-visualization&quot;"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="maximum-metabolism" first="2" step="1" last="10"/>
-    <enumeratedValueSet variable="initial-population">
-      <value value="400"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="grow-back-rate" first="0.5" step="0.5" last="4.5"/>
-  </experiment>
-  <experiment name="gbr-vision" repetitions="10" runMetricsEveryStep="true">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>crop-ratio</metric>
-    <enumeratedValueSet variable="maximum-sugar-endowment">
-      <value value="25"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="maximum-vision" first="2" step="1" last="10"/>
-    <enumeratedValueSet variable="minimum-sugar-endowment">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="visualization">
-      <value value="&quot;no-visualization&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="maximum-metabolism">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="initial-population">
-      <value value="400"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="grow-back-rate" first="0.5" step="0.5" last="4.5"/>
-  </experiment>
   <experiment name="sug-vision-aversugar" repetitions="10" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <metric>mean [sugar] of turtles</metric>
+    <steppedValueSet variable="maximum-sugar-endowment" first="10" step="20" last="200"/>
+    <steppedValueSet variable="maximum-vision" first="2" step="1" last="10"/>
+    <enumeratedValueSet variable="minimum-sugar-endowment">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="visualization">
+      <value value="&quot;no-visualization&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="maximum-metabolism">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-population">
+      <value value="400"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="grow-back-rate">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="sug-vision" repetitions="10" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>crop-ratio</metric>
+    <metric>count turtles</metric>
     <steppedValueSet variable="maximum-sugar-endowment" first="10" step="20" last="200"/>
     <steppedValueSet variable="maximum-vision" first="2" step="1" last="10"/>
     <enumeratedValueSet variable="minimum-sugar-endowment">
